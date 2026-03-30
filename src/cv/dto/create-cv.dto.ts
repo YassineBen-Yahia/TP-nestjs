@@ -1,6 +1,6 @@
-import { IsNotEmpty, IsString, IsNumber, Min, Max, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsString, IsNumber, Min, Max, IsOptional, IsArray } from 'class-validator';
 import { Type } from 'class-transformer';
-export class AddCvDto {
+export class CreateCvDto {
 
   @IsNotEmpty()
   @IsString()
@@ -29,4 +29,15 @@ export class AddCvDto {
   @IsOptional()
   @IsString()
   path: string;
+
+  @IsNotEmpty()
+  @Type(() => Number)
+  @IsNumber()
+  userId: number;
+
+  @IsOptional()
+  @IsArray()
+  @Type(() => Number)
+  @IsNumber({}, { each: true })
+  skillIds?: number[];
 }
