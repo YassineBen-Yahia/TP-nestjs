@@ -2,33 +2,42 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { SkillService } from './skill.service';
 import { CreateSkillDto } from './dto/create-skill.dto';
 import { UpdateSkillDto } from './dto/update-skill.dto';
+import { Skill } from './entities/skill.entity';
 
 @Controller('skill')
 export class SkillController {
   constructor(private readonly skillService: SkillService) {}
 
   @Post()
-  create(@Body() createSkillDto: CreateSkillDto) {
-    return this.skillService.create(createSkillDto);
+  async create(@Body() createSkillDto: CreateSkillDto): Promise<Skill> {
+    return await this.skillService.create(createSkillDto);
   }
 
   @Get()
-  findAll() {
-    return this.skillService.findAll();
+  async findAll(): Promise<Skill[]> {
+    return await this.skillService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.skillService.findOne(+id);
+  async findOne(@Param('id') id: string): Promise<Skill> {
+    return await this.skillService.findOne(+id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSkillDto: UpdateSkillDto) {
-    return this.skillService.update(+id, updateSkillDto);
+  async update(
+    @Param('id') id: string,
+    @Body() updateSkillDto: UpdateSkillDto,
+  ): Promise<Skill> {
+    return await this.skillService.update(+id, updateSkillDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.skillService.remove(+id);
+  async remove(@Param('id') id: string): Promise<void> {
+    return await this.skillService.remove(+id);
+  }
+
+  @Patch(':id/restore')
+  async restore(@Param('id') id: string): Promise<Skill> {
+    return await this.skillService.restore(+id);
   }
 }

@@ -1,26 +1,58 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Skill } from './entities/skill.entity';
 import { CreateSkillDto } from './dto/create-skill.dto';
 import { UpdateSkillDto } from './dto/update-skill.dto';
 
 @Injectable()
 export class SkillService {
-  create(createSkillDto: CreateSkillDto) {
-    return 'This action adds a new skill';
+  constructor(
+    @InjectRepository(Skill)
+    private skillRepository: Repository<Skill>,
+  ) {}
+
+  async create(createSkillDto: CreateSkillDto): Promise<Skill> {
+    const skill = this.skillRepository.create(createSkillDto);
+    return await this.skillRepository.save(skill);
   }
 
-  findAll() {
-    return `This action returns all skill`;
+  async findAll(): Promise<Skill[]> {
+    return await this.skillRepository.find({ withDeleted: false });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} skill`;
+  async findOne(id: number): Promise<Skill> {
+    const skill = await this.skillRepository.findOneBy({ id });
+    if (!skill) {
+      throw new NotFoundException(`Skill with id ${id} not found`);
+    }
+    return skill;
   }
 
-  update(id: number, updateSkillDto: UpdateSkillDto) {
-    return `This action updates a #${id} skill`;
+  async update(id: number, updateSkillDto: UpdateSkillDto): Promise<Skill> {
+    const skill = await this.findOne(id);
+    Object.assign(skill, updateSkillDto);
+    return await this.skillRepository.save(skill);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} skill`;
+  async remove(id: number): Promise<void> {
+    const skill = await this.findOne(id);
+    await this.skillRepository.softRemove(skill);
+  }
+
+  async restore(id: number): Promise<Skill> {
+    const skill = await this.skillRepository.findOne({
+      where: { id },
+      withDeleted: true,
+    });
+    if (!skill) {
+      throw new NotFoundException(`Skill with id ${id} not found`);
+    }
+    await this.skillRepository.restore(skill.id);
+    const restoredSkill = await this.skillRepository.findOneBy({ id });
+    if (!restoredSkill) {
+      throw new NotFoundException(`Failed to restore skill with id ${id}`);
+    }
+    return restoredSkill;
   }
 }
