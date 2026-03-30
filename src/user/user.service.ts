@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { Cv } from '../cv/entities/cv.entity';
 
 @Injectable()
 export class UserService {
@@ -36,8 +37,18 @@ export class UserService {
   }
 
   async remove(id: number): Promise<void> {
-    const user = await this.findOne(id);
-    await this.userRepository.softRemove(user);
+    await this.findOne(id);
+
+    await this.userRepository.manager.transaction(async (manager) => {
+      await manager
+        .getRepository(Cv)
+        .createQueryBuilder()
+        .softDelete()
+        .where('userId = :id', { id })
+        .execute();
+
+      await manager.getRepository(User).softDelete(id);
+    });
   }
 
   async restore(id: number): Promise<User> {
@@ -48,7 +59,18 @@ export class UserService {
     if (!user) {
       throw new NotFoundException(`User with id ${id} not found`);
     }
-    await this.userRepository.restore(user.id);
+
+    await this.userRepository.manager.transaction(async (manager) => {
+      await manager.getRepository(User).restore(user.id);
+
+      await manager
+        .getRepository(Cv)
+        .createQueryBuilder()
+        .restore()
+        .where('userId = :id', { id: user.id })
+        .execute();
+    });
+
     const restoredUser = await this.userRepository.findOneBy({ id });
     if (!restoredUser) {
       throw new NotFoundException(`Failed to restore user with id ${id}`);
