@@ -1,26 +1,84 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { In, Repository } from 'typeorm';
+import { Cv } from './entities/cv.entity';
 import { CreateCvDto } from './dto/create-cv.dto';
 import { UpdateCvDto } from './dto/update-cv.dto';
+import { User } from '../user/entities/user.entity';
+import { Skill } from '../skill/entities/skill.entity';
 
 @Injectable()
 export class CvService {
-  create(createCvDto: CreateCvDto) {
-    return 'This action adds a new cv';
+  constructor(
+    @InjectRepository(Cv)
+    private cvRepository: Repository<Cv>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+    @InjectRepository(Skill)
+    private skillRepository: Repository<Skill>,
+  ) {}
+
+  async create(createCvDto: CreateCvDto): Promise<Cv> {
+    const { userId, skillIds, ...cvPayload } = createCvDto;
+
+    const user = await this.userRepository.findOneBy({ id: userId });
+    if (!user) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
+
+    let skills: Skill[] = [];
+    if (skillIds?.length) {
+      skills = await this.skillRepository.find({ where: { id: In(skillIds) } });
+      if (skills.length !== skillIds.length) {
+        throw new NotFoundException('One or more skills were not found');
+      }
+    }
+
+    const cv = this.cvRepository.create({
+      ...cvPayload,
+      cin: String(cvPayload.cin),
+    });
+    cv.user = user;
+    cv.skills = skills;
+    return await this.cvRepository.save(cv);
+  }
+ 
+  async findAll(): Promise<Cv[]> {
+    return await this.cvRepository.find({ withDeleted: false });
   }
 
-  findAll() {
-    return `This action returns all cv`;
+  async findOne(id: number): Promise<Cv> {
+    const cv = await this.cvRepository.findOneBy({ id });
+    if (!cv) {
+      throw new NotFoundException(`CV with id ${id} not found`);
+    }
+    return cv;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} cv`;
+  async update(id: number, updateCvDto: UpdateCvDto): Promise<Cv> {
+    const cv = await this.findOne(id);
+    Object.assign(cv, updateCvDto);
+    return await this.cvRepository.save(cv);
   }
 
-  update(id: number, updateCvDto: UpdateCvDto) {
-    return `This action updates a #${id} cv`;
+  async remove(id: number): Promise<void> {
+    const cv = await this.findOne(id);
+    await this.cvRepository.softRemove(cv);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} cv`;
+  async restore(id: number): Promise<Cv> {
+    const cv = await this.cvRepository.findOne({
+      where: { id },
+      withDeleted: true,
+    });
+    if (!cv) {
+      throw new NotFoundException(`CV with id ${id} not found`);
+    }
+    await this.cvRepository.restore(cv.id);
+    const restoredCv = await this.cvRepository.findOneBy({ id });
+    if (!restoredCv) {
+      throw new NotFoundException(`Failed to restore CV with id ${id}`);
+    }
+    return restoredCv;
   }
 }

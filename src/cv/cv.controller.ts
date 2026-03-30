@@ -2,33 +2,42 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { CvService } from './cv.service';
 import { CreateCvDto } from './dto/create-cv.dto';
 import { UpdateCvDto } from './dto/update-cv.dto';
+import { Cv } from './entities/cv.entity';
 
 @Controller('cv')
 export class CvController {
   constructor(private readonly cvService: CvService) {}
 
   @Post()
-  create(@Body() createCvDto: CreateCvDto) {
-    return this.cvService.create(createCvDto);
+  async create(@Body() createCvDto: CreateCvDto): Promise<Cv> {
+    return await this.cvService.create(createCvDto);
   }
 
   @Get()
-  findAll() {
-    return this.cvService.findAll();
+  async findAll(): Promise<Cv[]> {
+    return await this.cvService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.cvService.findOne(+id);
+  async findOne(@Param('id') id: string): Promise<Cv> {
+    return await this.cvService.findOne(+id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCvDto: UpdateCvDto) {
-    return this.cvService.update(+id, updateCvDto);
+  async update(
+    @Param('id') id: string,
+    @Body() updateCvDto: UpdateCvDto,
+  ): Promise<Cv> {
+    return await this.cvService.update(+id, updateCvDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.cvService.remove(+id);
+  async remove(@Param('id') id: string): Promise<void> {
+    return await this.cvService.remove(+id);
+  }
+
+  @Patch(':id/restore')
+  async restore(@Param('id') id: string): Promise<Cv> {
+    return await this.cvService.restore(+id);
   }
 }
