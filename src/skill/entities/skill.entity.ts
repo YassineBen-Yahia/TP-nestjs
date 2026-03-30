@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToMany } from 'typeorm';
 import { Cv } from '../../cv/entities/cv.entity';
-import { TimestampEntites } from 'src/generics/timestamp.entities';
+import { TimestampEntites } from '../../generics/timestamp.entities';
 
 
 @Entity()
