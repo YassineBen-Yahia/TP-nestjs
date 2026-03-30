@@ -25,7 +25,7 @@ export class Cv extends TimestampEntites {
   age: number;
 
   @Column()
-  cin: string;
+  cin: number;
 
   @Column()
   job: string;

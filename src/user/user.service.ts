@@ -31,9 +31,12 @@ export class UserService {
   }
 
   async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
-    const user = await this.findOne(id);
-    Object.assign(user, updateUserDto);
-    return await this.userRepository.save(user);
+    const newUser = await this.userRepository.preload({ id, ...updateUserDto });
+    if (!newUser) {
+      throw new NotFoundException(`User with id ${id} not found`);
+    }
+    
+    return await this.userRepository.save(newUser);
   }
 
   async remove(id: number): Promise<void> {

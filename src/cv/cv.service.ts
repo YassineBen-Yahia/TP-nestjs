@@ -36,7 +36,7 @@ export class CvService {
 
     const cv = this.cvRepository.create({
       ...cvPayload,
-      cin: String(cvPayload.cin),
+      cin: cvPayload.cin,
     });
     cv.user = user;
     cv.skills = skills;
@@ -56,9 +56,11 @@ export class CvService {
   }
 
   async update(id: number, updateCvDto: UpdateCvDto): Promise<Cv> {
-    const cv = await this.findOne(id);
-    Object.assign(cv, updateCvDto);
-    return await this.cvRepository.save(cv);
+    const newCv = await this.cvRepository.preload({ id, ...updateCvDto });
+    if (!newCv) {
+      throw new NotFoundException(`CV with id ${id} not found`);
+    }
+    return await this.cvRepository.save(newCv);
   }
 
   async remove(id: number): Promise<void> {

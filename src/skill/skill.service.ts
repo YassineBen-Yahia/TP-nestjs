@@ -30,9 +30,11 @@ export class SkillService {
   }
 
   async update(id: number, updateSkillDto: UpdateSkillDto): Promise<Skill> {
-    const skill = await this.findOne(id);
-    Object.assign(skill, updateSkillDto);
-    return await this.skillRepository.save(skill);
+    const newSkill = await this.skillRepository.preload({ id, ...updateSkillDto });
+    if (!newSkill) {
+      throw new NotFoundException(`Skill with id ${id} not found`);
+    }
+    return await this.skillRepository.save(newSkill);
   }
 
   async remove(id: number): Promise<void> {
