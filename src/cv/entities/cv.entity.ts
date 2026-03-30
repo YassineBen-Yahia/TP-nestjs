@@ -8,9 +8,10 @@ import {
 } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
 import { Skill } from '../../skill/entities/skill.entity';
+import { TimestampEntites } from 'src/generics/timestamp.entities';
 
 @Entity()
-export class Cv {
+export class Cv extends TimestampEntites {
   @PrimaryGeneratedColumn()
   id: number;
 
