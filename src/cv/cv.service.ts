@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Cv } from './entities/cv.entity';
@@ -18,13 +18,8 @@ export class CvService {
     private skillRepository: Repository<Skill>,
   ) {}
 
-  async create(createCvDto: CreateCvDto): Promise<Cv> {
-    const { userId, skillIds, ...cvPayload } = createCvDto;
-
-    const user = await this.userRepository.findOneBy({ id: userId });
-    if (!user) {
-      throw new NotFoundException(`User with id ${userId} not found`);
-    }
+  async create(createCvDto: CreateCvDto, user: User): Promise<Cv> {
+    const { skillIds, ...cvPayload } = createCvDto;
 
     let skills: Skill[] = [];
     if (skillIds?.length) {
@@ -34,15 +29,12 @@ export class CvService {
       }
     }
 
-    const cv = this.cvRepository.create({
-      ...cvPayload,
-      cin: cvPayload.cin,
-    });
+    const cv = this.cvRepository.create({ ...cvPayload });
     cv.user = user;
     cv.skills = skills;
     return await this.cvRepository.save(cv);
   }
- 
+
   async findAll(): Promise<Cv[]> {
     return await this.cvRepository.find({ withDeleted: false });
   }
@@ -55,7 +47,13 @@ export class CvService {
     return cv;
   }
 
-  async update(id: number, updateCvDto: UpdateCvDto): Promise<Cv> {
+  async update(id: number, updateCvDto: UpdateCvDto, user: User): Promise<Cv> {
+    const cv = await this.findOne(id);
+
+    if (cv.user.id !== user.id) {
+      throw new ForbiddenException('You can only update your own CVs');
+    }
+
     const newCv = await this.cvRepository.preload({ id, ...updateCvDto });
     if (!newCv) {
       throw new NotFoundException(`CV with id ${id} not found`);
@@ -63,8 +61,13 @@ export class CvService {
     return await this.cvRepository.save(newCv);
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: number, user: User): Promise<void> {
     const cv = await this.findOne(id);
+
+    if (cv.user.id !== user.id) {
+      throw new ForbiddenException('You can only delete your own CVs');
+    }
+
     await this.cvRepository.softRemove(cv);
   }
 
