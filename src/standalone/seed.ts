@@ -39,9 +39,8 @@ async function bootstrap() {
       cin: 12345678,
       job: 'Backend Developer',
       path: '/files/cv-yassine.pdf',
-      userId: user.id,
       skillIds: [skill.id],
-    });
+    }, user);
 
     console.log('Cv created:', cv);
     console.log('Seed terminé avec succès');
