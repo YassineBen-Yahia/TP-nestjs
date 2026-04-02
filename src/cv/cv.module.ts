@@ -5,9 +5,13 @@ import { CvController } from './cv.controller';
 import { Cv } from './entities/cv.entity';
 import { User } from '../user/entities/user.entity';
 import { Skill } from '../skill/entities/skill.entity';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Cv, User, Skill])],
+  imports: [
+    TypeOrmModule.forFeature([Cv, User, Skill]),
+    AuthModule                                       // ← add this
+  ],
   controllers: [CvController],
   providers: [CvService],
 })
