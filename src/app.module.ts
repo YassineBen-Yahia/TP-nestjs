@@ -1,12 +1,10 @@
-import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from './user/user.module';
 import { SkillModule } from './skill/skill.module';
 import { CvModule } from './cv/cv.module';
 import { AuthModule } from './auth/auth.module';
-import { AuthMiddleware } from './auth/middlewares/auth.middleware';
-
 
 
 @Module({
@@ -33,14 +31,4 @@ import { AuthMiddleware } from './auth/middlewares/auth.middleware';
     AuthModule,
   ],
 })
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(AuthMiddleware)
-      .forRoutes(
-        { path: 'cv', method: RequestMethod.POST },
-        { path: 'cv/:id', method: RequestMethod.PATCH },
-        { path: 'cv/:id', method: RequestMethod.DELETE },
-      );
-  }
-}
+export class AppModule {}
