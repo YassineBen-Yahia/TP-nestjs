@@ -9,11 +9,11 @@ export class User extends TimestampEntites {
   id: number;
 
   @Column({
-    type: 'enum',
-    enum: UserRoleEnum,
+    type: 'varchar',
+    length: 50,
     default: UserRoleEnum.USER,
   })
-  role:UserRoleEnum;
+  role: string;
 
   @Column({ unique: true })
   username: string;
