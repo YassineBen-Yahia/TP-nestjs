@@ -6,6 +6,7 @@ import { CreateCvDto } from './dto/create-cv.dto';
 import { UpdateCvDto } from './dto/update-cv.dto';
 import { User } from '../user/entities/user.entity';
 import { Skill } from '../skill/entities/skill.entity';
+import { UserRoleEnum } from '../enums/use-role.enum';
 
 @Injectable()
 export class CvService {
@@ -35,8 +36,15 @@ export class CvService {
     return await this.cvRepository.save(cv);
   }
 
-  async findAll(): Promise<Cv[]> {
-    return await this.cvRepository.find({ withDeleted: false });
+  async findAll(user: User): Promise<Cv[]> {
+    if (user.role === UserRoleEnum.ADMIN) {
+      return await this.cvRepository.find({ withDeleted: false });
+    }
+
+    return await this.cvRepository.find({
+      where: { user: { id: user.id } },
+      withDeleted: false,
+    });
   }
 
   async findOne(id: number): Promise<Cv> {

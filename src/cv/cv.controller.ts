@@ -16,8 +16,9 @@ export class CvController {
   }
 
   @Get()
-  async findAll(): Promise<Cv[]> {
-    return await this.cvService.findAll();
+  @UseGuards(JwtAuthGuard)
+  async findAll(@Request() req): Promise<Cv[]> {
+    return await this.cvService.findAll(req['user']);
   }
 
   @Get(':id')
