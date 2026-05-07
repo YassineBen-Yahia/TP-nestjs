@@ -5,6 +5,7 @@ import { UserModule } from './user/user.module';
 import { SkillModule } from './skill/skill.module';
 import { CvModule } from './cv/cv.module';
 import { AuthModule } from './auth/auth.module';
+import { ChatModule } from './chat/chat.module';
 
 
 @Module({
@@ -29,6 +30,7 @@ import { AuthModule } from './auth/auth.module';
     SkillModule,
     CvModule,
     AuthModule,
+    ChatModule,
   ],
 })
 export class AppModule {}
