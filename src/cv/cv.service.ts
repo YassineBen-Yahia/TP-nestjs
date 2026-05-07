@@ -7,6 +7,9 @@ import { UpdateCvDto } from './dto/update-cv.dto';
 import { User } from '../user/entities/user.entity';
 import { Skill } from '../skill/entities/skill.entity';
 import { UserRoleEnum } from '../enums/use-role.enum';
+import { CvEventsService } from './listeners/cv-events.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { APP_EVENTS } from './config/events.config';
 
 @Injectable()
 export class CvService {
@@ -17,6 +20,8 @@ export class CvService {
     private userRepository: Repository<User>,
     @InjectRepository(Skill)
     private skillRepository: Repository<Skill>,
+    private readonly cvEvents: CvEventsService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async create(createCvDto: CreateCvDto, user: User): Promise<Cv> {
@@ -33,7 +38,16 @@ export class CvService {
     const cv = this.cvRepository.create({ ...cvPayload });
     cv.user = user;
     cv.skills = skills;
-    return await this.cvRepository.save(cv);
+    const saved = await this.cvRepository.save(cv);
+    const payload = {
+      type: APP_EVENTS.addedCv,
+      cvId: saved.id,
+      userId: user.id,
+      timestamp: new Date().toISOString(),
+      details: { payload: createCvDto },
+    };
+    this.eventEmitter.emit(APP_EVENTS.addedCv, payload);
+    return saved;
   }
 
   async findAll(user: User): Promise<Cv[]> {
@@ -66,7 +80,16 @@ export class CvService {
     if (!newCv) {
       throw new NotFoundException(`CV with id ${id} not found`);
     }
-    return await this.cvRepository.save(newCv);
+    const saved = await this.cvRepository.save(newCv);
+    const payload = {
+      type: APP_EVENTS.updatedCv,
+      cvId: saved.id,
+      userId: user.id,
+      timestamp: new Date().toISOString(),
+      details: { payload: updateCvDto },
+    };
+    this.eventEmitter.emit(APP_EVENTS.updatedCv, payload);
+    return saved;
   }
 
   async remove(id: number, user: User): Promise<void> {
@@ -77,6 +100,13 @@ export class CvService {
     }
 
     await this.cvRepository.softRemove(cv);
+    const payload = {
+      type: APP_EVENTS.deletedCv,
+      cvId: id,
+      userId: user.id,
+      timestamp: new Date().toISOString(),
+    };
+    this.eventEmitter.emit(APP_EVENTS.deletedCv, payload);
   }
 
   async restore(id: number): Promise<Cv> {
@@ -92,6 +122,13 @@ export class CvService {
     if (!restoredCv) {
       throw new NotFoundException(`Failed to restore CV with id ${id}`);
     }
+    const payload = {
+      type: APP_EVENTS.restoredCv,
+      cvId: id,
+      userId: restoredCv.user?.id ?? null,
+      timestamp: new Date().toISOString(),
+    };
+    this.eventEmitter.emit(APP_EVENTS.restoredCv, payload);
     return restoredCv;
   }
 }
