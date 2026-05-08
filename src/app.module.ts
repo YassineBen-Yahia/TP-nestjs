@@ -7,7 +7,7 @@ import { SkillModule } from './skill/skill.module';
 import { CvModule } from './cv/cv.module';
 import { AuthModule } from './auth/auth.module';
 import { ChatModule } from './chat/chat.module';
-
+import { WebhookModule } from './webhook/webhook.module';
 
 @Module({
   imports: [
@@ -33,6 +33,7 @@ import { ChatModule } from './chat/chat.module';
     CvModule,
     AuthModule,
     ChatModule,
+    WebhookModule,
   ],
 })
 export class AppModule {}
